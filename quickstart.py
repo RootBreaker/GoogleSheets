@@ -1,19 +1,20 @@
 from __future__ import print_function
-
-import os.path
-
+from config import host, user, password, db_name, port
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import os.path
+import psycopg2
+from get_dollar_exchange_rate import get_dollar as gd
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 # The ID and range of a sample spreadsheet.
 SAMPLE_SPREADSHEET_ID = '1_OKcGaTsd3-gXvZRwJStJ3V0jTBtnbnSz7T1LvyhdMQ'
-SAMPLE_RANGE_NAME = 'List1!A1:D14'
+SAMPLE_RANGE_NAME = 'List1!A2:D51'
 
 
 def main():
@@ -49,12 +50,36 @@ def main():
             print('No data found.')
             return
 
-        print('Name, Major:')
         for row in values:
-            # Print columns A and E, which correspond to indices 0 and 4.
             print('%s, %s, %s, %s' % (row[0], row[1], row[2], row[3]))
+
     except HttpError as err:
         print(err)
+
+    connection = psycopg2.connect(
+        database=db_name,
+        user=user,
+        password=password,
+        host=host,
+        port=port
+    )
+
+    pricelistdollars = []
+    for row in values:
+        pricelistdollars.append(row[2])
+
+    dollar_rate = int(gd())
+    pricelistrubles = [int(num) * dollar_rate for num in pricelistdollars]
+
+    print(pricelistdollars)
+    print(pricelistrubles)
+
+    with connection.cursor() as cursor:
+        for row in values:
+            cursor.execute("INSERT INTO list1 (№, order_number, price_dollars, delivery_time) VALUES (%s, %s, %s, %s)", (row[0], row[1], row[2], row[3]))
+        connection.commit()
+
+    print ("[INFO] Data was succesfully inserted")
 
 
 if __name__ == '__main__':

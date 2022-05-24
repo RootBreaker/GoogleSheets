@@ -1,6 +1,7 @@
 from pprint import pprint
-
 import requests
 
-data = requests.get('https://www.cbr-xml-daily.ru/daily_json.js').json()
-pprint(data['Valute']['USD'])
+
+def get_dollar():
+    data = requests.get('https://www.cbr-xml-daily.ru/daily_json.js').json()
+    return data['Valute']['USD']['Previous']
