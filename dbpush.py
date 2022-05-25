@@ -25,3 +25,8 @@ def getvaluesfromlist2():
         cursor.execute("SELECT (№, order_number, price_dollars, delivery_time) FROM list2;")
         return cursor.fetchall()
 
+
+def getdollars():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT (price_dollars) FROM list1")
+        return cursor.fetchall()
